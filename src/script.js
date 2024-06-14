@@ -11,6 +11,7 @@ import gsap from "gsap"
  */
 // Debug
 const gui = new GUI()
+const debugObject = {}
 
 // Canvas
 const canvas = document.querySelector("canvas.webgl")
@@ -152,8 +153,11 @@ floor.rotation.x = -Math.PI * 0.5
 floor.position.y = 0
 scene.add(floor)
 
-gui.add(floor.material, "displacementScale").min(0).max(1).step(0.001).name("floorDisplacementScale")
-gui.add(floor.material, "displacementBias").min(-1).max(1).step(0.001).name("floorDisplacementBias")
+const floorGUI = gui.addFolder("Floor")
+floorGUI.add(floor.material, "displacementScale").min(0).max(1).step(0.001)
+floorGUI.add(floor.material, "displacementBias").min(-1).max(1).step(0.001)
+floorGUI.add(floor.material, "roughness").min(-1).max(1).step(0.001)
+floorGUI.add(floor.material, "metalness").min(-1).max(1).step(0.001)
 
 // House container
 const house = new THREE.Group()
@@ -299,7 +303,11 @@ const doorLight = new THREE.PointLight("#ff7d46", 5)
 doorLight.position.set(0.5, 2.2, 2.5)
 house.add(doorLight)
 
-gui.add(doorLight, "intensity").min(0).max(50).step(1)
+const doorLightGUI = gui.addFolder("Door Light")
+doorLightGUI.add(doorLight.position, "x").min(-1.5).max(1.5).step(0.05)
+doorLightGUI.add(doorLight, "intensity").min(0).max(50).step(1).listen()
+doorLightGUI.add(doorLight, "distance").min(1).max(5).step(0.05)
+doorLightGUI.addColor(doorLight, "color")
 
 // Ghost
 const ghost1 = new THREE.PointLight("#ce46ff", 6)
@@ -344,6 +352,11 @@ scene.add(camera)
 // Controls
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
+
+controls.maxDistance = 10
+controls.minDistance = 5
+controls.enablePan = false
+controls.maxPolarAngle = Math.PI * 0.49
 
 /**
  * Renderer
@@ -410,21 +423,22 @@ scene.fog = new THREE.FogExp2("#12343f", 0.1)
 const timer = new Timer()
 
 //door light flickering light effect
-const flickeringLight = (light) => {
-    const tl = gsap.timeline({ repeat: -1, repeatDelay: Math.random() * (15 - 5) + 5 })
-    tl.to(light, { intensity: 0, duration: 0.1, ease: "power2.inOut" })
-        .to(light, { intensity: 10, duration: 0.1, ease: "power2.inOut" })
-        .to(light, { intensity: 0, duration: 0.1, ease: "power2.inOut" })
-        .to(light, { intensity: 5, duration: 0.2, ease: "power2.inOut" })
-        .to(light, { intensity: 0, duration: 0.1, ease: "power2.inOut" })
-        .to(light, { intensity: 8, duration: 0.2, ease: "power2.inOut" })
-        .to(light, { intensity: 0, duration: 0.1, ease: "power2.inOut" })
-        .to(light, { intensity: 3, duration: 0.1, ease: "power2.inOut" })
-        .to(light, { intensity: 6, duration: 0.1, ease: "power2.inOut" })
-}
 
-// Start flickering effect
-flickeringLight(doorLight)
+
+const tl = gsap.timeline({ repeat: -1, repeatDelay: Math.random() * (15 - 5) + 5 })
+tl.to(doorLight, { intensity: 0, duration: 0.1, ease: "power2.inOut" })
+    .to(doorLight, { intensity: 10, duration: 0.1, ease: "power2.inOut" })
+    .to(doorLight, { intensity: 0, duration: 0.1, ease: "power2.inOut" })
+    .to(doorLight, { intensity: 5, duration: 0.2, ease: "power2.inOut" })
+    .to(doorLight, { intensity: 0, duration: 0.1, ease: "power2.inOut" })
+    .to(doorLight, { intensity: 8, duration: 0.2, ease: "power2.inOut" })
+    .to(doorLight, { intensity: 0, duration: 0.1, ease: "power2.inOut" })
+    .to(doorLight, { intensity: 3, duration: 0.1, ease: "power2.inOut" })
+    .to(doorLight, { intensity: 6, duration: 0.1, ease: "power2.inOut" })
+
+
+debugObject.flick = () => tl.restart()
+doorLightGUI.add(debugObject, "flick")
 
 const tick = () => {
     // Timer
